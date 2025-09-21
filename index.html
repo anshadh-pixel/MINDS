@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <title>Memory Match Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
   <style>
     body {
       font-family: sans-serif;
       background-image: url('background.jpg');
       background-size: cover;
-      background-position: center;
+      background-position: center center;
       background-repeat: no-repeat;
+      background-attachment: fixed;
       color: white;
       text-align: center;
       margin: 0;
