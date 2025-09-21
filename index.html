@@ -4,12 +4,17 @@
   <meta charset="UTF-8">
   <title>Memory Match Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- Service worker registration -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js');
     }
   </script>
+
   <style>
     body {
       font-family: sans-serif;
@@ -116,10 +121,23 @@
       }
     }
 
+    function loadSavedProgress() {
+      if (localStorage.getItem("level")) {
+        level = parseInt(localStorage.getItem("level"));
+        mode = localStorage.getItem("mode");
+        score = parseInt(localStorage.getItem("score")) || 0;
+      }
+    }
+
+    function saveProgress() {
+      localStorage.setItem("level", level);
+      localStorage.setItem("score", score);
+      localStorage.setItem("mode", mode);
+    }
+
     function startGame(selectedMode) {
       mode = selectedMode;
-      level = 1;
-      score = 0;
+      loadSavedProgress();
       document.getElementById("menu").style.display = "none";
       document.getElementById("status").style.display = "block";
       document.getElementById("nextLevel").style.display = "none";
@@ -141,6 +159,7 @@
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           alert("Time's up! Final Score: " + score);
+          localStorage.clear();
           location.reload();
         }
       }, 1000);
@@ -175,6 +194,7 @@
               matched.push(flipped[0].dataset.index, flipped[1].dataset.index);
               score++;
               document.getElementById("score").textContent = score;
+              saveProgress();
               if (matched.length === getPairs(level, mode).length) {
                 clearInterval(timerInterval);
                 document.getElementById("nextLevel").style.display = level < 25 ? "block" : "none";
@@ -194,6 +214,7 @@
 
     function nextLevel() {
       level++;
+      saveProgress();
       document.getElementById("nextLevel").style.display = "none";
       startLevel();
     }
