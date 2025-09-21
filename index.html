@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Memory Match Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      background-image: url('background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 10px;
+    }
+    h1 { font-size: 24px; margin-top: 10px; }
+    #menu, #status, #nextLevel { margin-top: 15px; }
+    #game {
+      display: grid;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .card {
+      width: 60px;
+      height: 60px;
+      background-image: url('card-back.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: transform 0.3s;
+      color: transparent;
+    }
+    .card:active { transform: scale(0.95); }
+    .flipped {
+      background-image: none;
+      background-color: yellow;
+      color: black;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 16px;
+      margin: 5px;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #555;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background: #777;
+    }
+  </style>
+</head>
+<body>
+  <h1>Memory Match Game</h1>
+
+  <div id="menu">
+    <p>Select Difficulty:</p>
+    <button onclick="startGame('simple')">Simple</button>
+    <button onclick="startGame('hard')">Hard</button>
+    <button onclick="startGame('expert')">Expert</button>
+  </div>
+
+  <div id="status" style="display:none;">
+    <p>Level: <span id="level">1</span> | Score: <span id="score">0</span> | Time: <span id="timer">30</span>s</p>
+  </div>
+
+  <div id="game"></div>
+
+  <div id="nextLevel" style="display:none;">
+    <button onclick="nextLevel()">Next Level</button>
+  </div>
+
+  <script>
+    const emojis = ["😊", "🔥", "🌈", "🍎", "🎉", "🚀", "🐱", "🌟", "🥳", "💥", "🎈", "🍉", "😎", "🧠", "📚"];
+    let mode = "simple";
+    let level = 1;
+    let score = 0;
+    let timeLeft = 30;
+    let flipped = [];
+    let matched = [];
+    let timerInterval;
+
+    function getPairs(level, mode) {
+      let base = mode === "simple" ? 3 : mode === "hard" ? 6 : 10;
+      let count = Math.min(base + level - 1, emojis.length);
+      let selected = emojis.slice(0, count);
+      return [...selected, ...selected];
+    }
+
+    function getTimeLimit(mode) {
+      return mode === "simple" ? 30 : mode === "hard" ? 20 : 15;
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function startGame(selectedMode) {
+      mode = selectedMode;
+      level = 1;
+      score = 0;
+      document.getElementById("menu").style.display = "none";
+      document.getElementById("status").style.display = "block";
+      document.getElementById("nextLevel").style.display = "none";
+      startLevel();
+    }
+
+    function startLevel() {
+      flipped = [];
+      matched = [];
+      timeLeft = getTimeLimit(mode);
+      document.getElementById("level").textContent = level;
+      document.getElementById("score").textContent = score;
+      document.getElementById("timer").textContent = timeLeft;
+      renderGame();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          alert("Time's up! Final Score: " + score);
+          location.reload();
+        }
+      }, 1000);
+    }
+
+    function renderGame() {
+      const game = document.getElementById("game");
+      const cards = getPairs(level, mode);
+      shuffle(cards);
+      game.innerHTML = "";
+      const cols = Math.min(Math.ceil(Math.sqrt(cards.length)), 5);
+      game.style.gridTemplateColumns = `repeat(${cols}, 60px)`;
+      cards.forEach((emoji, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.index = index;
+        card.dataset.emoji = emoji;
+        card.onclick = () => flipCard(card);
+        game.appendChild(card);
+      });
+    }
+
+    function flipCard(card) {
+      if (flipped.length < 2 && !card.classList.contains("flipped") && !matched.includes(card.dataset.index)) {
+        card.textContent = card.dataset.emoji;
+        card.classList.add("flipped");
+        flipped.push(card);
+
+        if (flipped.length === 2) {
+          setTimeout(() => {
+            if (flipped[0].dataset.emoji === flipped[1].dataset.emoji) {
+              matched.push(flipped[0].dataset.index, flipped[1].dataset.index);
+              score++;
+              document.getElementById("score").textContent = score;
+              if (matched.length === getPairs(level, mode).length) {
+                clearInterval(timerInterval);
+                document.getElementById("nextLevel").style.display = level < 25 ? "block" : "none";
+                alert("Level " + level + " complete!");
+              }
+            } else {
+              flipped[0].textContent = "";
+              flipped[1].textContent = "";
+              flipped[0].classList.remove("flipped");
+              flipped[1].classList.remove("flipped");
+            }
+            flipped = [];
+          }, 800);
+        }
+      }
+    }
+
+    function nextLevel() {
+      level++;
+      document.getElementById("nextLevel").style.display = "none";
+      startLevel();
+    }
+  </script>
+</body>
+</html>
